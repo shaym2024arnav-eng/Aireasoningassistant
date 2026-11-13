@@ -1,89 +1,161 @@
-## Aut# AI Reasoning Assistant
+# Smart Reasoning Assistant
 
-A full-stack AI-powered reasoning platform that decomposes complex problems into smaller tasks and generates structured, explainable solutions using a multi-agent architecture.
+A full-stack multi-agent reasoning app. Six LLM agents (GPT-OSS 120B via Groq) route, decompose, plan, solve, verify and explain any question. If the **Verifier** rejects the Solver's answer, the Solver retries using the Verifier's feedback until the answer passes or the revision limit is reached.
 
-## Overview
+**Live demo:** _coming soon_
 
-AI Reasoning Assistant breaks down complex, multi-step problems the way a human expert would — by splitting them into smaller pieces, planning an approach, solving each piece, verifying the results, and explaining the reasoning in plain language. Instead of a single model producing a black-box answer, the system routes the problem through five specialized agents, each responsible for one stage of the reasoning process.
+## Why it's different from a single LLM call
+
+A single prompt gives one unchecked answer. This app splits the work across specialised agents and adds a self-correction loop: a separate Verifier re-does the calculation or fact-check, and a failed check sends the issues back to the Solver. Every answer is saved with its verification status, confidence score, number of revisions, and per-agent timings.
+
+## How it works
+
+```
+question
+   │
+   ▼
+Router ──► Wikipedia lookup (only if the Router says it helps)
+   │
+   ▼
+Decomposer ──► Planner ──► Solver ◄─────────────┐
+                              │                 │ issues sent back
+                              ▼                 │ (max 2 revisions)
+                           Verifier ── fail ────┘
+                              │ pass
+                              ▼
+                          Explainer ──► saved to MongoDB
+```
+
+| Agent | Job | Returns |
+|---|---|---|
+| **Router** | Classifies the question (factual, analytical, planning, project, general) and decides whether an encyclopedia lookup would help | `route`, `needsKnowledge`, `searchQuery` |
+| **Decomposer** | Breaks the question into 2–6 sub-problems specific to it | `subProblems[]` |
+| **Planner** | Turns the sub-problems into an ordered plan | `steps[]` |
+| **Solver** | Works through the plan, shows its working and gives a final answer. On a retry, fixes every issue the Verifier listed | `working`, `answer` |
+| **Verifier** | Independently re-checks calculations and facts (against the Wikipedia source when used), plus completeness and consistency | `passed`, `issues[]`, `confidence` |
+| **Explainer** | Writes a clear explanation that starts with the answer, and flags anything still unverified | `explanation` |
+
+Each agent asks the model for JSON, and its reply is parsed defensively (handles markdown fences and stray text) and validated before use, so a malformed reply can't crash the pipeline or reach the database.
 
 ## Features
 
-- **Five-Agent Architecture** — Decomposer, Planner, Solver, Verifier, and Explainer agents work together for structured, step-by-step problem solving
-- **Explainable Output** — every solution comes with a clear breakdown of how the answer was reached, not just the final result
-- **User Authentication** — secure login and registration using JWT
-- **Reasoning History** — past problems and solutions are stored per user and can be revisited
-- **Full-Stack Architecture** — React frontend communicating with a Node/Express REST API backed by MongoDB
+- **Six LLM agents** with a **Verifier-driven self-correction loop**
+- **Pluggable LLM provider**: Groq (default, free), OpenAI or Claude, switched with one `.env` variable
+- **Wikipedia grounding** for factual questions, chosen by the Router
+- **Result page** with the short answer highlighted, a Verified / Not verified badge with confidence and revision count, and a per-agent timing timeline
+- **Dashboard** with total sessions, verification rate and average response time
+- **JWT authentication** with per-user reasoning history (view and delete)
+- Automatic logout when the login token expires
 
-## Tech Stack
+## Tech stack
 
-**Frontend**
-- React.js
-- React Router
+- **Frontend:** React 19, React Router, Axios, Vite
+- **Backend:** Node.js, Express 5, MongoDB (Mongoose), JWT, bcrypt
+- **AI:** Groq API (`openai/gpt-oss-120b`), Wikipedia API
 
-**Backend**
-- Node.js
-- Express.js
-- MongoDB (Mongoose)
-- JWT Authentication
-
-## Project Structure
+## Project structure
 
 ```
-AIReasoningAssistant/
-├── backend/
-│   ├── config/          # DB and app configuration
-│   ├── controllers/     # Route handler logic
-│   ├── middleware/      # Auth and error-handling middleware
-│   ├── models/          # Mongoose schemas
-│   ├── routes/          # API route definitions
-│   ├── Services/        # Multi-agent reasoning logic
-│   ├── utils/           # Helper functions
-│   └── server.js        # App entry point
-│
-└── frontend/
-    └── src/
-        ├── pages/        # Dashboard, History, Login, Register, Reasoning
-        └── services/     # API calls to backend
+backend/
+  agents/                 one file per agent: prompt + output validation
+  services/
+    llmClient.js          LLM client: provider switch, JSON parsing, retries, timeout
+    reasoningPipeline.js  runs the agents in order + verify/retry loop + timing
+    wikipediaService.js   knowledge retrieval
+  utils/normalize.js      cleans up loosely-shaped LLM output
+  controllers/  routes/  middleware/  models/  config/
+  server.js
+frontend/
+  src/pages/              Login, Register, Dashboard, Reasoning, History, Agents
+  src/components/         layout, sidebar, protected route
+  src/config.js           API base URL from VITE_API_URL
+  vercel.json             SPA routing for Vercel
 ```
 
-## How It Works
+## API
 
-1. **Decomposer** — breaks the input problem into smaller, manageable sub-problems
-2. **Planner** — determines the order and approach for solving each sub-problem
-3. **Solver** — works through each sub-problem
-4. **Verifier** — checks the solutions for correctness and consistency
-5. **Explainer** — compiles the results into a clear, step-by-step explanation for the user
+All `/api/reasoning` routes need an `Authorization: Bearer <token>` header.
 
-## Getting Started
+| Method | Route | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Create an account |
+| POST | `/api/auth/login` | Log in, returns a JWT |
+| POST | `/api/reasoning/create` | `{ "problem": "..." }` (max 2000 characters). Runs the pipeline and saves the result |
+| GET | `/api/reasoning/history` | Your past sessions |
+| GET | `/api/reasoning/stats` | Total sessions, verification rate, average response time |
+| DELETE | `/api/reasoning/:id` | Delete one of your sessions |
 
-### Prerequisites
-- Node.js and npm
-- MongoDB (local or Atlas)
+## Running locally
 
-### Backend Setup
+**Prerequisites:** Node.js 20+, MongoDB (local or Atlas), and a free Groq API key from [console.groq.com/keys](https://console.groq.com/keys).
+
+### Backend
+
 ```bash
 cd backend
 npm install
 ```
 
-Create a `.env` file in the `backend/` folder with:
+Create `backend/.env` (see `backend/.env.example`):
+
 ```
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
+MONGO_URI=mongodb://127.0.0.1:27017/smart_reasoning
+JWT_SECRET=any_long_random_string
+LLM_PROVIDER=groq
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=openai/gpt-oss-120b
 PORT=5000
 ```
 
-Start the server:
 ```bash
-npm start
+npm run dev
 ```
 
-### Frontend Setup
+### Frontend
+
 ```bash
 cd frontend
 npm install
-npm run dev
-```hor
+```
 
-**Arnav Shyam**
-[GitHub](https://github.com/shaym2024arnav-eng) · [LinkedIn](https://linkedin.com/in/arnav-shyam-629820296)
+Create `frontend/.env`:
+
+```
+VITE_API_URL=http://localhost:5000
+```
+
+```bash
+npm run dev
+```
+
+Open http://localhost:5173, register, and ask a question.
+
+### Switching the LLM provider
+
+| Provider | `.env` |
+|---|---|
+| Groq (default, free) | `LLM_PROVIDER=groq` and `GROQ_API_KEY=...` |
+| OpenAI | `LLM_PROVIDER=openai` and `OPENAI_API_KEY=...` |
+| Claude | `LLM_PROVIDER=claude` and `ANTHROPIC_API_KEY=...` |
+
+An optional `GROQ_MODEL`, `OPENAI_MODEL` or `CLAUDE_MODEL` overrides the default model.
+
+## Example
+
+> I bought a phone for ₹24,000 and sold it at a 15% loss. With that money I bought a tablet and sold it at a 20% profit. Overall profit or loss?
+
+- **Router:** analytical
+- **Solver:** 24,000 × 0.85 = 20,400 → 20,400 × 1.20 = 24,480
+- **Answer:** profit of ₹480
+- **Verifier:** Verified (a common wrong answer, "5% profit", is the kind of mistake the Verifier is there to catch and send back)
+
+## Roadmap
+
+- [ ] Rate limiting and input hardening
+- [ ] Jest + Supertest tests with a mocked LLM, GitHub Actions CI
+- [ ] Accuracy evaluation: pipeline vs a single LLM call on known-answer problems
+- [ ] Deploy: Render (API), Vercel (frontend), MongoDB Atlas
+
+## Author
+
+**Arnav Shyam** · [GitHub](https://github.com/shaym2024arnav-eng) · [LinkedIn](https://linkedin.com/in/arnav-shyam-629820296)
