@@ -2894,3 +2894,70 @@ a {
     }
 
 }
+/* ---------- Verification, answer highlight and agent timeline ---------- */
+
+.preserve-lines {
+    white-space: pre-wrap;
+}
+
+.result-answer-highlight {
+    margin-bottom: 20px;
+    padding: 18px 20px;
+    border: 1px solid var(--accent);
+    border-radius: 14px;
+    background: var(--bg-panel-soft);
+}
+
+.result-answer-highlight p {
+    margin: 8px 0 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.verification-badge {
+    display: inline-block;
+    margin: 8px 0 10px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.verification-badge.is-passed {
+    background: rgba(90, 184, 159, 0.15);
+    color: var(--accent-soft);
+    border: 1px solid var(--accent);
+}
+
+.verification-badge.is-failed {
+    background: rgba(230, 160, 80, 0.12);
+    color: #f0c08a;
+    border: 1px solid rgba(230, 160, 80, 0.5);
+}
+
+.agent-trace {
+    margin-top: 20px;
+}
+
+.agent-trace-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.agent-trace-chip {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-panel);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    text-transform: capitalize;
+}
+
+.agent-trace-chip small {
+    margin-left: 6px;
+    color: var(--text-muted);
+}

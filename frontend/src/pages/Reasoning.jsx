@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
+
 function Reasoning() {
     const navigate = useNavigate();
 
@@ -31,7 +32,7 @@ function Reasoning() {
             }
 
             const response = await axios.post(
-                               `${API_BASE_URL}/api/reasoning/create`,
+                `${API_BASE_URL}/api/reasoning/create`,
                 {
                     problem: problem.trim()
                 },
@@ -97,7 +98,7 @@ function Reasoning() {
                             </h3>
 
                             <span>
-                                Enter a factual, planning, or project question
+                                Ask any question: facts, maths, planning or projects
                             </span>
                         </div>
 
@@ -116,6 +117,7 @@ function Reasoning() {
                                 setError("");
                             }}
                             placeholder="Example: Explain quantum computing or How can I prepare for an SDE interview?"
+                            maxLength={2000}
                             required
                         />
 
@@ -130,7 +132,7 @@ function Reasoning() {
                                 disabled={loading}
                             >
                                 {loading
-                                    ? "Processing..."
+                                    ? "Agents working (10-20s)..."
                                     : "Run Analysis"
                                 }
                             </button>
@@ -167,13 +169,13 @@ function Reasoning() {
                     <div className="reasoning-pipeline-list">
 
                         {[
-                            "Router",
-                            "Decomposer",
-                            "Planner",
-                            "Solver",
-                            "Verifier",
-                            "Explainer"
-                        ].map((agent, index) => (
+                            ["Router", "Classifies the question"],
+                            ["Decomposer", "Breaks the problem into parts"],
+                            ["Planner", "Builds a step-by-step plan"],
+                            ["Solver", "Works through the plan and answers"],
+                            ["Verifier", "Re-checks the answer; sends it back if wrong"],
+                            ["Explainer", "Writes the final explanation"]
+                        ].map(([agent, description], index) => (
 
                             <div
                                 className="pipeline-item"
@@ -189,18 +191,7 @@ function Reasoning() {
                                     </strong>
 
                                     <span>
-                                        {index === 0
-                                            ? "Classifies the question"
-                                            : index === 1
-                                                ? "Breaks the problem into parts"
-                                                : index === 2
-                                                    ? "Builds a structured plan"
-                                                    : index === 3
-                                                        ? "Generates the solution"
-                                                        : index === 4
-                                                            ? "Checks consistency"
-                                                            : "Creates the final explanation"
-                                        }
+                                        {description}
                                     </span>
                                 </div>
 
@@ -254,6 +245,13 @@ function Reasoning() {
                         </div>
                     )}
 
+
+                    {result.answer && (
+                        <div className="result-answer-highlight">
+                            <span className="result-block-label">Answer</span>
+                            <p>{result.answer}</p>
+                        </div>
+                    )}
 
                     <div className="enterprise-result-grid">
 
@@ -314,7 +312,7 @@ function Reasoning() {
                                 Solution
                             </span>
 
-                            <p>
+                            <p className="preserve-lines">
                                 {result.solution}
                             </p>
 
@@ -327,9 +325,27 @@ function Reasoning() {
                                 Verification
                             </span>
 
-                            <p>
-                                {result.verification}
-                            </p>
+                            {result.verificationPassed != null && (
+                                <div
+                                    className={`verification-badge ${result.verificationPassed ? "is-passed" : "is-failed"}`}
+                                >
+                                    {result.verificationPassed ? "Verified" : "Not verified"}
+                                    {result.confidence != null &&
+                                        ` · ${Math.round(result.confidence * 100)}% confidence`}
+                                    {result.revisions > 0 &&
+                                        ` · ${result.revisions} revision${result.revisions > 1 ? "s" : ""}`}
+                                </div>
+                            )}
+
+                            {result.verificationIssues?.length > 0 ? (
+                                <ul>
+                                    {result.verificationIssues.map((issue, index) => (
+                                        <li key={index}>{issue}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p>{result.verification}</p>
+                            )}
 
                         </div>
 
@@ -337,16 +353,33 @@ function Reasoning() {
                         <div className="result-panel-block">
 
                             <span className="result-block-label">
-                                Final Answer
+                                Explanation
                             </span>
 
-                            <p>
+                            <p className="preserve-lines">
                                 {result.finalAnswer}
                             </p>
 
                         </div>
 
                     </div>
+
+                    {result.trace?.length > 0 && (
+                        <div className="agent-trace">
+                            <span className="result-block-label">
+                                Agent timeline
+                                {result.totalMs ? ` · ${(result.totalMs / 1000).toFixed(1)}s total` : ""}
+                                {result.tokens ? ` · ${result.tokens} tokens` : ""}
+                            </span>
+                            <div className="agent-trace-list">
+                                {result.trace.map((t, index) => (
+                                    <span key={index} className="agent-trace-chip">
+                                        {t.agent} <small>{t.ms} ms</small>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                 </section>
 

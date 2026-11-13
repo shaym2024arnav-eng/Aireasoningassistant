@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
+
 function Dashboard() {
     const navigate = useNavigate();
 
@@ -19,7 +20,7 @@ function Dashboard() {
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
-                                        `${API_BASE_URL}/api/reasoning/stats`,
+                    `${API_BASE_URL}/api/reasoning/stats`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`
@@ -55,7 +56,7 @@ function Dashboard() {
 
                 <div>
                     <h1>
-                        Welcome back, {user?.name || "Arnav"}
+                        Welcome back, {user?.name || "there"}
                     </h1>
 
                     <p>
@@ -97,18 +98,20 @@ function Dashboard() {
                 <div className="metric-card">
 
                     <div className="metric-label">
-                        Recent Activity
+                        Verified Answers
                     </div>
 
                     <div className="metric-value">
-                        {loading
+                        {loading || stats.verificationRate == null
                             ? "--"
-                            : stats.recentSessions.length}
+                            : `${Math.round(stats.verificationRate * 100)}%`}
                     </div>
 
                     <div className="metric-description">
-                        Latest reasoning sessions
-                        currently in view.
+                        Answers that passed the Verifier
+                        {stats.revisedSessions
+                            ? ` (${stats.revisedSessions} fixed after a revision)`
+                            : ""}.
                     </div>
 
                 </div>
@@ -117,15 +120,17 @@ function Dashboard() {
                 <div className="metric-card">
 
                     <div className="metric-label">
-                        Active Agents
+                        {stats.averageResponseMs ? "Avg Response Time" : "Active Agents"}
                     </div>
 
                     <div className="metric-value">
-                        6
+                        {loading || !stats.averageResponseMs
+                            ? "6"
+                            : `${(stats.averageResponseMs / 1000).toFixed(1)}s`}
                     </div>
 
                     <div className="metric-description">
-                        Router, Decomposer, Planner,
+                        Across Router, Decomposer, Planner,
                         Solver, Verifier, Explainer.
                     </div>
 
@@ -272,7 +277,7 @@ function Dashboard() {
 
                     <div className="recent-list">
 
-                        {stats.recentSessions
+                        {(stats.recentSessions || [])
                             .slice(0, 3)
                             .map((session) => (
 

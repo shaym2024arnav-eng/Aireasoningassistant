@@ -1,42 +1,41 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
+
 function History() {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const fetchHistory = async () => {
-        try {
-            setLoading(true);
-
-            const token = localStorage.getItem("token");
-
-            const response = await axios.get(
-                                `${API_BASE_URL}/api/reasoning/history`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-            setHistory(response.data.history || []);
-
-        } catch (err) {
-            console.error("History Error:", err);
-
-            setError(
-                err.response?.data?.message ||
-                "Failed to load reasoning history."
-            );
-
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const token = localStorage.getItem("token");
+
+                const response = await axios.get(
+                    `${API_BASE_URL}/api/reasoning/history`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                setHistory(response.data.history || []);
+
+            } catch (err) {
+                console.error("History Error:", err);
+
+                setError(
+                    err.response?.data?.message ||
+                    "Failed to load reasoning history."
+                );
+
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchHistory();
     }, []);
 
@@ -54,7 +53,7 @@ function History() {
             const token = localStorage.getItem("token");
 
             await axios.delete(
-                                `${API_BASE_URL}/api/reasoning/${id}`,
+                `${API_BASE_URL}/api/reasoning/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -261,11 +260,17 @@ function History() {
                                             </span>
 
                                             <strong className="completed-text">
-                                                Completed
+                                                {item.verificationPassed === true
+                                                    ? "Verified"
+                                                    : item.verificationPassed === false
+                                                        ? "Not verified"
+                                                        : "Completed"}
                                             </strong>
 
                                             <small>
-                                                analysis generated
+                                                {item.confidence != null
+                                                    ? `${Math.round(item.confidence * 100)}% confidence`
+                                                    : "analysis generated"}
                                             </small>
 
                                         </div>
@@ -278,6 +283,23 @@ function History() {
                                         <summary>
                                             View full analysis
                                         </summary>
+
+
+                                        {item.answer && (
+
+                                            <div className="history-detail-block">
+
+                                                <h4>
+                                                    Answer
+                                                </h4>
+
+                                                <p>
+                                                    <strong>{item.answer}</strong>
+                                                </p>
+
+                                            </div>
+
+                                        )}
 
 
                                         {item.breakdown?.length > 0 && (
@@ -342,7 +364,7 @@ function History() {
                                                     Solution
                                                 </h4>
 
-                                                <p>
+                                                <p className="preserve-lines">
                                                     {item.solution}
                                                 </p>
 
@@ -373,10 +395,10 @@ function History() {
                                             <div className="history-detail-block">
 
                                                 <h4>
-                                                    Final Answer
+                                                    {item.answer ? "Explanation" : "Final Answer"}
                                                 </h4>
 
-                                                <p>
+                                                <p className="preserve-lines">
                                                     {item.finalAnswer}
                                                 </p>
 
