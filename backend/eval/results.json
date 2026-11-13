@@ -1,0 +1,529 @@
+{
+  "summary": {
+    "problems": 30,
+    "baselineAccuracy": "100.0%",
+    "pipelineFirstAttemptAccuracy": "100.0%",
+    "pipelineFinalAccuracy": "100.0%",
+    "fixedByVerifierLoop": 0,
+    "brokenByVerifierLoop": 0,
+    "verifierCaughtWrongAnswers": "0 of 0",
+    "verifierFalseRejections": 0,
+    "averageBaselineMs": 1150,
+    "averagePipelineMs": 20633,
+    "errors": 0,
+    "provider": "groq",
+    "ranAt": "2026-11-13T18:39:01.172Z"
+  },
+  "rows": [
+    {
+      "id": 1,
+      "problem": "A shop sells pens at 3 for 20 rupees. How much do 15 pens cost in rupees?",
+      "baseline": {
+        "answer": "Since 3 pens cost 20 rupees, 15 pens (which is 5 groups of 3) cost 5 × 20 = 100 rupees.",
+        "correct": true,
+        "ms": 643
+      },
+      "pipeline": {
+        "answer": "15 pens cost 100 rupees.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 4191
+      }
+    },
+    {
+      "id": 2,
+      "problem": "A train leaves at 9:45 AM and arrives at 1:20 PM the same day. How many minutes long is the journey?",
+      "baseline": {
+        "answer": "The journey lasts 215 minutes.",
+        "correct": true,
+        "ms": 419
+      },
+      "pipeline": {
+        "answer": "The train journey is 215 minutes long.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19090
+      }
+    },
+    {
+      "id": 3,
+      "problem": "If 5 machines make 5 widgets in 5 minutes, how many minutes would 100 machines take to make 100 widgets?",
+      "baseline": {
+        "answer": "5 minutes",
+        "correct": true,
+        "ms": 639
+      },
+      "pipeline": {
+        "answer": "It would still take 5 minutes for 100 machines to make 100 widgets.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 34941
+      }
+    },
+    {
+      "id": 4,
+      "problem": "A bat and a ball cost 110 rupees in total. The bat costs 100 rupees more than the ball. How much does the ball cost in rupees?",
+      "baseline": {
+        "answer": "The ball costs 5 rupees.",
+        "correct": true,
+        "ms": 600
+      },
+      "pipeline": {
+        "answer": "The ball costs 5 rupees.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19876
+      }
+    },
+    {
+      "id": 5,
+      "problem": "A patch of lily pads doubles in size every day. It takes 48 days to cover the whole lake. On which day does it cover half the lake?",
+      "baseline": {
+        "answer": "Since the lily pads double each day, they cover half the lake one day before full coverage, i.e., on day 47.",
+        "correct": true,
+        "ms": 395
+      },
+      "pipeline": {
+        "answer": "The lake is half covered on day 47.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19428
+      }
+    },
+    {
+      "id": 6,
+      "problem": "What is the sum of all integers from 1 to 200?",
+      "baseline": {
+        "answer": "The sum of the integers from 1 to 200 is 20,100.",
+        "correct": true,
+        "ms": 642
+      },
+      "pipeline": {
+        "answer": "The sum of all integers from 1 to 200 is 20,100.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19399
+      }
+    },
+    {
+      "id": 7,
+      "problem": "A rectangle has a perimeter of 46 cm and a length of 15 cm. What is its area in square cm?",
+      "baseline": {
+        "answer": "The rectangle’s width is 8 cm, so its area is 15 × 8 = 120 cm².",
+        "correct": true,
+        "ms": 459
+      },
+      "pipeline": {
+        "answer": "The area is 120 square centimeters.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19285
+      }
+    },
+    {
+      "id": 8,
+      "problem": "What is 17% of 340?",
+      "baseline": {
+        "answer": "17% of 340 is 57.8.",
+        "correct": true,
+        "ms": 702
+      },
+      "pipeline": {
+        "answer": "17% of 340 is 57.8.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 18885
+      }
+    },
+    {
+      "id": 9,
+      "problem": "A price of 800 rupees is increased by 25% and then the new price is decreased by 20%. What is the final price in rupees?",
+      "baseline": {
+        "answer": "800 rupees",
+        "correct": true,
+        "ms": 1297
+      },
+      "pipeline": {
+        "answer": "The final price after the two adjustments is 800 rupees.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 20379
+      }
+    },
+    {
+      "id": 10,
+      "problem": "When writing every whole number from 1 to 100, how many times is the digit 7 written?",
+      "baseline": {
+        "answer": "The digit 7 appears 20 times when writing the numbers from 1 to 100.",
+        "correct": true,
+        "ms": 929
+      },
+      "pipeline": {
+        "answer": "The digit 7 is written 20 times when listing the numbers from 1 to 100.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 21592
+      }
+    },
+    {
+      "id": 11,
+      "problem": "Ravi is 4 times as old as his son. In 20 years Ravi will be twice as old as his son. How old is the son now?",
+      "baseline": {
+        "answer": "The son is currently 10 years old.",
+        "correct": true,
+        "ms": 535
+      },
+      "pipeline": {
+        "answer": "The son is currently 10 years old.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 35606
+      }
+    },
+    {
+      "id": 12,
+      "problem": "How many prime numbers are there between 1 and 50?",
+      "baseline": {
+        "answer": "There are 15 prime numbers between 1 and 50.",
+        "correct": true,
+        "ms": 799
+      },
+      "pipeline": {
+        "answer": "There are 15 prime numbers between 1 and 50.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 20277
+      }
+    },
+    {
+      "id": 13,
+      "problem": "Today is Monday. What day of the week will it be 100 days from today?",
+      "baseline": {
+        "answer": "It will be Wednesday.",
+        "correct": true,
+        "ms": 883
+      },
+      "pipeline": {
+        "answer": "It will be Wednesday.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 20135
+      }
+    },
+    {
+      "id": 14,
+      "problem": "A car uses 8 litres of fuel per 100 km. How many litres does it need for 350 km?",
+      "baseline": {
+        "answer": "It needs 28 litres of fuel for 350 km.",
+        "correct": true,
+        "ms": 595
+      },
+      "pipeline": {
+        "answer": "The car needs 28 litres of fuel for 350 km.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 18827
+      }
+    },
+    {
+      "id": 15,
+      "problem": "10000 rupees is invested at 10% per year compound interest, compounded annually. What is the total amount after 2 years in rupees?",
+      "baseline": {
+        "answer": "12100 rupees",
+        "correct": true,
+        "ms": 402
+      },
+      "pipeline": {
+        "answer": "After two years the amount is 12100 rupees.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19235
+      }
+    },
+    {
+      "id": 16,
+      "problem": "A clock shows exactly 3:15. What is the smaller angle in degrees between the hour hand and the minute hand?",
+      "baseline": {
+        "answer": "7.5 degrees",
+        "correct": true,
+        "ms": 719
+      },
+      "pipeline": {
+        "answer": "The smaller angle between the hands at 3:15 is 7.5 degrees.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19140
+      }
+    },
+    {
+      "id": 17,
+      "problem": "How many times does the letter r appear in the word strawberry?",
+      "baseline": {
+        "answer": "The letter r appears 3 times in the word strawberry.",
+        "correct": true,
+        "ms": 752
+      },
+      "pipeline": {
+        "answer": "The letter r appears 3 times in \"strawberry\".",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19649
+      }
+    },
+    {
+      "id": 18,
+      "problem": "Which number is larger: 9.11 or 9.9?",
+      "baseline": {
+        "answer": "9.9 is larger than 9.11 because 9.9 is closer to 10, while 9.11 is just above 9.",
+        "correct": true,
+        "ms": 682
+      },
+      "pipeline": {
+        "answer": "9.9 is larger than 9.11.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 18828
+      }
+    },
+    {
+      "id": 19,
+      "problem": "12 people are in a room and every person shakes hands with every other person exactly once. How many handshakes happen?",
+      "baseline": {
+        "answer": "There are 66 handshakes, since the number of distinct pairs among 12 people is C(12,2)=12·11/2=66.",
+        "correct": true,
+        "ms": 707
+      },
+      "pipeline": {
+        "answer": "There are 66 handshakes.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 18879
+      }
+    },
+    {
+      "id": 20,
+      "problem": "The average of four numbers is 25. Three of them are 20, 30 and 15. What is the fourth number?",
+      "baseline": {
+        "answer": "The fourth number is 35.",
+        "correct": true,
+        "ms": 401
+      },
+      "pipeline": {
+        "answer": "The fourth number is 35.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19264
+      }
+    },
+    {
+      "id": 21,
+      "problem": "Convert the binary number 101101 to decimal.",
+      "baseline": {
+        "answer": "45",
+        "correct": true,
+        "ms": 647
+      },
+      "pipeline": {
+        "answer": "The binary number 101101 converts to the decimal number 45.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 20586
+      }
+    },
+    {
+      "id": 22,
+      "problem": "Pipe A fills a tank in 6 hours and pipe B fills it in 3 hours. How many hours do both pipes take together to fill the tank?",
+      "baseline": {
+        "answer": "The combined rate is 1/2 tank per hour, so together they fill the tank in 2 hours.",
+        "correct": true,
+        "ms": 15686
+      },
+      "pipeline": {
+        "answer": "Both pipes together fill the tank in 2 hours.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19661
+      }
+    },
+    {
+      "id": 23,
+      "problem": "All bloops are razzies and all razzies are lazzies. Are all bloops definitely lazzies? Answer yes or no.",
+      "baseline": {
+        "answer": "Yes, all bloops are definitely lazzies.",
+        "correct": true,
+        "ms": 732
+      },
+      "pipeline": {
+        "answer": "yes",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19447
+      }
+    },
+    {
+      "id": 24,
+      "problem": "Sally has 3 brothers. Each of her brothers has 2 sisters. How many sisters does Sally have?",
+      "baseline": {
+        "answer": "1",
+        "correct": true,
+        "ms": 881
+      },
+      "pipeline": {
+        "answer": "Sally has 1 sister.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19640
+      }
+    },
+    {
+      "id": 25,
+      "problem": "Someone walks 6 km to a shop at 4 km/h and walks the same 6 km back at 6 km/h. What is the average speed for the whole trip in km/h?",
+      "baseline": {
+        "answer": "The average speed is total distance 12 km divided by total time 2.5 h, giving 12 ÷ 2.5 = 4.8 km/h.",
+        "correct": true,
+        "ms": 488
+      },
+      "pipeline": {
+        "answer": "The average speed for the whole trip is 4.8 km/h.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 20247
+      }
+    },
+    {
+      "id": 26,
+      "problem": "What is the least common multiple of 12, 18 and 30?",
+      "baseline": {
+        "answer": "The least common multiple of 12, 18, and 30 is 180.",
+        "correct": true,
+        "ms": 647
+      },
+      "pipeline": {
+        "answer": "The least common multiple of 12, 18 and 30 is 180.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 18993
+      }
+    },
+    {
+      "id": 27,
+      "problem": "What is 2 to the power 10 minus 10 to the power 2?",
+      "baseline": {
+        "answer": "The result is 924.",
+        "correct": true,
+        "ms": 413
+      },
+      "pipeline": {
+        "answer": "The result is 924.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19001
+      }
+    },
+    {
+      "id": 28,
+      "problem": "An item costs 2000 rupees. It gets a 20% discount, and then an extra 10% off the discounted price. What is the final price in rupees?",
+      "baseline": {
+        "answer": "The final price is 1440 rupees.",
+        "correct": true,
+        "ms": 738
+      },
+      "pipeline": {
+        "answer": "The final price after both discounts is 1440 rupees.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19821
+      }
+    },
+    {
+      "id": 29,
+      "problem": "How many trailing zeros does 25 factorial (25!) have?",
+      "baseline": {
+        "answer": "25! has 6 trailing zeros, since floor(25/5)=5 and floor(25/25)=1, giving a total of 6 factors of 10.",
+        "correct": true,
+        "ms": 612
+      },
+      "pipeline": {
+        "answer": "25! ends with 6 trailing zeros.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 19909
+      }
+    },
+    {
+      "id": 30,
+      "problem": "How many minutes are there in 2.75 hours?",
+      "baseline": {
+        "answer": "There are 165 minutes in 2.75 hours.",
+        "correct": true,
+        "ms": 452
+      },
+      "pipeline": {
+        "answer": "There are 165 minutes in 2.75 hours.",
+        "correct": true,
+        "firstAttemptCorrect": true,
+        "verified": true,
+        "revisions": 0,
+        "ms": 34779
+      }
+    }
+  ]
+}
