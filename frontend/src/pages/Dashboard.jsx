@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { API_BASE_URL } from "../config";
 function Dashboard() {
     const navigate = useNavigate();
 
@@ -19,7 +19,7 @@ function Dashboard() {
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
-                    "http://localhost:5000/api/reasoning/stats",
+                                        `${API_BASE_URL}/api/reasoning/stats`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`

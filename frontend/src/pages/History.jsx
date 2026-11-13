@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-
+import { API_BASE_URL } from "../config";
 function History() {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ function History() {
             const token = localStorage.getItem("token");
 
             const response = await axios.get(
-                "http://localhost:5000/api/reasoning/history",
+                                `${API_BASE_URL}/api/reasoning/history`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -54,7 +54,7 @@ function History() {
             const token = localStorage.getItem("token");
 
             await axios.delete(
-                `http://localhost:5000/api/reasoning/${id}`,
+                                `${API_BASE_URL}/api/reasoning/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
