@@ -1,359 +1,167 @@
+const mongoose = require("mongoose");
 const Reasoning = require("../models/Reasoning");
+const { runReasoningPipeline } = require("../services/reasoningPipeline");
+const { createLLMClient } = require("../services/llmClient");
 
-const decomposerAgent = require("../agents/decomposerAgent");
-const plannerAgent = require("../agents/plannerAgent");
-const solverAgent = require("../agents/solverAgent");
-const verifierAgent = require("../agents/verifierAgent");
-const explainerAgent = require("../agents/explainerAgent");
-const routerAgent = require("../agents/routerAgent");
+const MAX_PROBLEM_LENGTH = 2000;
 
-const getWikipediaKnowledge =
-    require("../services/wikipediaService");
+// Built lazily so the API key is read after dotenv has loaded,
+// and so tests can replace it with setLLMClient().
+let llmClient = null;
+const getLLM = () => {
+    if (!llmClient) llmClient = createLLMClient();
+    return llmClient;
+};
+exports.setLLMClient = (client) => {
+    llmClient = client;
+};
 
+const summarizeVerification = ({ passed, issues, confidence, revisions }) => {
+    const pct = Math.round(confidence * 100);
+    const revisionNote = revisions
+        ? ` after ${revisions} revision${revisions > 1 ? "s" : ""}`
+        : "";
 
-// ========================================
-// CREATE NEW REASONING
-// ========================================
+    if (passed) {
+        return `Verified${revisionNote} (confidence ${pct}%).`;
+    }
 
+    return `Not fully verified${revisionNote} (confidence ${pct}%). Open issues: ${issues.join("; ")}`;
+};
+
+// POST /api/reasoning/create
 exports.createReasoning = async (req, res) => {
+    const problem = typeof req.body?.problem === "string" ? req.body.problem.trim() : "";
+
+    if (!problem) {
+        return res.status(400).json({ message: "Problem is required" });
+    }
+
+    if (problem.length > MAX_PROBLEM_LENGTH) {
+        return res.status(400).json({
+            message: `Problem must be ${MAX_PROBLEM_LENGTH} characters or fewer`
+        });
+    }
+
+    const started = Date.now();
+    let result;
+
     try {
-        const { problem } = req.body;
+        result = await runReasoningPipeline(problem, { llm: getLLM() });
+    } catch (error) {
+        console.error("Reasoning pipeline error:", error.message);
+        return res.status(502).json({
+            message: "The reasoning model is unavailable right now. Please try again."
+        });
+    }
 
-        if (!problem || !problem.trim()) {
-            return res.status(400).json({
-                message: "Problem is required"
-            });
-        }
-
-        const cleanProblem = problem.trim();
-
-        // ----------------------------------------
-        // 1. ROUTER AGENT
-        // ----------------------------------------
-
-        const routeType = routerAgent(cleanProblem);
-
-        console.log(
-            "Question Type:",
-            routeType
-        );
-
-
-        // ----------------------------------------
-        // 2. FETCH WIKIPEDIA KNOWLEDGE
-        //    ONLY FOR FACTUAL QUESTIONS
-        // ----------------------------------------
-
-        let wikipediaData = {
-            title: null,
-            content: null
-        };
-
-        if (routeType === "factual") {
-
-            wikipediaData =
-                await getWikipediaKnowledge(
-                    cleanProblem
-                );
-
-        }
-
-
-        const knowledge =
-            wikipediaData?.content || "";
-
-
-        // ----------------------------------------
-        // 3. DECOMPOSER AGENT
-        // ----------------------------------------
-
-        const breakdown =
-            decomposerAgent(
-                cleanProblem,
-                knowledge,
-                routeType
-            );
-
-
-        // ----------------------------------------
-        // 4. PLANNER AGENT
-        // ----------------------------------------
-
-        const plan =
-            plannerAgent(
-                cleanProblem,
-                breakdown,
-                knowledge,
-                routeType
-            );
-
-
-        // ----------------------------------------
-        // 5. SOLVER AGENT
-        // ----------------------------------------
-
-        const solution =
-            solverAgent(
-                cleanProblem,
-                plan,
-                knowledge,
-                routeType
-            );
-
-
-        // ----------------------------------------
-        // 6. VERIFIER AGENT
-        // ----------------------------------------
-
-        const verification =
-            verifierAgent(
-                cleanProblem,
-                plan,
-                solution,
-                knowledge,
-                routeType
-            );
-
-
-        // ----------------------------------------
-        // 7. EXPLAINER AGENT
-        // ----------------------------------------
-
-        const finalAnswer =
-            explainerAgent(
-                cleanProblem,
-                breakdown,
-                plan,
-                solution,
-                verification,
-                knowledge,
-                routeType
-            );
-
-
-        // ----------------------------------------
-        // 8. SAVE REASONING IN MONGODB
-        // ----------------------------------------
-
-        const reasoning =
-            await Reasoning.create({
-
-                user: req.user.id,
-
-                problem: cleanProblem,
-
-                routeType,
-
-                breakdown,
-
-                plan,
-
-                solution,
-
-                verification,
-
-                finalAnswer,
-
-                sourceTitle:
-                    wikipediaData?.title ||
-                    null,
-
-                sourceContent:
-                    wikipediaData?.content ||
-                    null
-            });
-
-
-        // ----------------------------------------
-        // 9. SEND RESPONSE
-        // ----------------------------------------
+    try {
+        const reasoning = await Reasoning.create({
+            user: req.user.id,
+            problem,
+            routeType: result.routeType,
+            breakdown: result.breakdown,
+            plan: result.plan,
+            solution: result.solution,
+            answer: result.answer,
+            verification: summarizeVerification(result.verification),
+            verificationPassed: result.verification.passed,
+            verificationIssues: result.verification.issues,
+            confidence: result.verification.confidence,
+            revisions: result.verification.revisions,
+            finalAnswer: result.finalAnswer,
+            sourceTitle: result.sourceTitle,
+            sourceContent: result.sourceContent,
+            trace: result.trace,
+            totalMs: Date.now() - started,
+            tokens: result.usage.promptTokens + result.usage.completionTokens
+        });
 
         return res.status(201).json({
-
-            message:
-                "Reasoning generated successfully",
-
+            message: "Reasoning generated successfully",
             reasoning
         });
-
     } catch (error) {
-
-        console.error(
-            "Create Reasoning Error:",
-            error
-        );
-
-        return res.status(500).json({
-
-            message:
-                error.message ||
-                "Failed to generate reasoning"
-        });
+        console.error("Save reasoning error:", error.message);
+        return res.status(500).json({ message: "Failed to save reasoning" });
     }
 };
 
+// GET /api/reasoning/history
+exports.getReasoningHistory = async (req, res) => {
+    try {
+        const history = await Reasoning.find({ user: req.user.id })
+            .select("-sourceContent")
+            .sort({ createdAt: -1 })
+            .limit(100);
 
-// ========================================
-// GET REASONING HISTORY
-// ========================================
+        return res.status(200).json({ history });
+    } catch (error) {
+        console.error("Get history error:", error.message);
+        return res.status(500).json({ message: "Failed to fetch reasoning history" });
+    }
+};
 
-exports.getReasoningHistory =
-    async (req, res) => {
+// GET /api/reasoning/stats
+exports.getReasoningStats = async (req, res) => {
+    try {
+        const userId = new mongoose.Types.ObjectId(req.user.id);
 
-        try {
+        const [totalSessions, recentSessions, aggregate] = await Promise.all([
+            Reasoning.countDocuments({ user: req.user.id }),
+            Reasoning.find({ user: req.user.id })
+                .select("problem routeType verificationPassed createdAt")
+                .sort({ createdAt: -1 })
+                .limit(5),
+            Reasoning.aggregate([
+                { $match: { user: userId, verificationPassed: { $ne: null } } },
+                {
+                    $group: {
+                        _id: null,
+                        verified: { $sum: { $cond: ["$verificationPassed", 1, 0] } },
+                        checked: { $sum: 1 },
+                        revised: { $sum: { $cond: [{ $gt: ["$revisions", 0] }, 1, 0] } },
+                        avgMs: { $avg: "$totalMs" }
+                    }
+                }
+            ])
+        ]);
 
-            const history =
-                await Reasoning.find({
+        const agg = aggregate[0];
 
-                    user: req.user.id
+        return res.status(200).json({
+            totalSessions,
+            recentSessions,
+            latestProblem: recentSessions[0]?.problem || "No reasoning sessions yet",
+            verificationRate: agg ? agg.verified / agg.checked : null,
+            revisedSessions: agg ? agg.revised : 0,
+            averageResponseMs: agg?.avgMs ? Math.round(agg.avgMs) : null
+        });
+    } catch (error) {
+        console.error("Get stats error:", error.message);
+        return res.status(500).json({ message: "Failed to load dashboard statistics" });
+    }
+};
 
-                })
-                .sort({
+// DELETE /api/reasoning/:id
+exports.deleteReasoning = async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).json({ message: "Invalid reasoning id" });
+    }
 
-                    createdAt: -1
+    try {
+        const deleted = await Reasoning.findOneAndDelete({
+            _id: req.params.id,
+            user: req.user.id
+        });
 
-                });
-
-
-            return res.status(200).json({
-
-                history
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Get History Error:",
-                error
-            );
-
-            return res.status(500).json({
-
-                message:
-                    error.message ||
-                    "Failed to fetch reasoning history"
-            });
+        if (!deleted) {
+            return res.status(404).json({ message: "Reasoning session not found" });
         }
-    };
 
-
-// ========================================
-// GET DASHBOARD STATISTICS
-// ========================================
-
-exports.getReasoningStats =
-    async (req, res) => {
-
-        try {
-
-            const totalSessions =
-                await Reasoning
-                    .countDocuments({
-
-                        user: req.user.id
-
-                    });
-
-
-            const recentSessions =
-                await Reasoning.find({
-
-                    user: req.user.id
-
-                })
-                .sort({
-
-                    createdAt: -1
-
-                })
-                .limit(5);
-
-
-            const latestProblem =
-                recentSessions.length > 0
-
-                    ? recentSessions[0]
-                        .problem
-
-                    : "No reasoning sessions yet";
-
-
-            return res.status(200).json({
-
-                totalSessions,
-
-                recentSessions,
-
-                latestProblem
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Get Statistics Error:",
-                error
-            );
-
-            return res.status(500).json({
-
-                message:
-                    error.message ||
-                    "Failed to load dashboard statistics"
-            });
-        }
-    };
-
-
-// ========================================
-// DELETE REASONING
-// ========================================
-
-exports.deleteReasoning =
-    async (req, res) => {
-
-        try {
-
-            const reasoning =
-                await Reasoning.findOne({
-
-                    _id: req.params.id,
-
-                    user: req.user.id
-
-                });
-
-
-            if (!reasoning) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Reasoning session not found"
-                });
-            }
-
-
-            await reasoning.deleteOne();
-
-
-            return res.status(200).json({
-
-                message:
-                    "Reasoning session deleted successfully"
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Delete Reasoning Error:",
-                error
-            );
-
-            return res.status(500).json({
-
-                message:
-                    error.message ||
-                    "Failed to delete reasoning session"
-            });
-        }
-    };
+        return res.status(200).json({ message: "Reasoning session deleted successfully" });
+    } catch (error) {
+        console.error("Delete reasoning error:", error.message);
+        return res.status(500).json({ message: "Failed to delete reasoning session" });
+    }
+};

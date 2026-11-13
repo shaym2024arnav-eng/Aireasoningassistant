@@ -1,42 +1,26 @@
-const plannerAgent = (
-    problem,
-    breakdown,
-    knowledge
-) => {
-    const normalized = problem.toLowerCase();
+const { asStringArray } = require("../utils/normalize");
 
-    if (
-        normalized.includes("interview") ||
-        normalized.includes("job") ||
-        normalized.includes("placement")
-    ) {
-        return [
-            "Identify the target role and important topics",
-            "Strengthen core technical fundamentals",
-            "Practice coding and problem solving",
-            "Revise projects and prepare explanations",
-            "Take mock interviews and improve weak areas"
-        ];
+const SYSTEM = `You are the Planner agent in a multi-agent reasoning system.
+Given a problem and its sub-problems, write an ordered plan of concrete steps the Solver will follow.
+Each step names what to do and which sub-problem it addresses. Keep it to 2-8 steps.
+Reply with JSON only: {"steps": ["...", "..."]}`;
+
+const plannerAgent = async ({ problem, route, subProblems }, llm) => {
+    const user = [
+        `Problem: ${problem}`,
+        `Category: ${route}`,
+        `Sub-problems:\n${subProblems.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
+    ].join("\n\n");
+
+    const { data, usage } = await llm({ system: SYSTEM, user });
+
+    const steps = asStringArray(data.steps, { max: 8 });
+
+    if (steps.length === 0) {
+        throw new Error("Planner returned no steps");
     }
 
-    if (
-        normalized.includes("project") ||
-        normalized.includes("build") ||
-        normalized.includes("application")
-    ) {
-        return [
-            "Define requirements and expected output",
-            "Choose the technology stack",
-            "Design the system architecture",
-            "Develop the application step by step",
-            "Test, debug, and deploy"
-        ];
-    }
-
-    return breakdown.map(
-        (step, index) =>
-            `Step ${index + 1}: Analyze ${step}`
-    );
+    return { output: steps, usage };
 };
 
 module.exports = plannerAgent;

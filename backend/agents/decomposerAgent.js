@@ -1,51 +1,27 @@
-const decomposerAgent = (problem, knowledge) => {
-    const normalized = problem.toLowerCase();
+const { asStringArray } = require("../utils/normalize");
 
-    const knowledgePreview = knowledge
-        ? knowledge.split(". ").slice(0, 3)
-        : [];
+const SYSTEM = `You are the Decomposer agent in a multi-agent reasoning system.
+Break the user's problem into 2-6 smaller sub-problems that, once answered, fully answer the original problem.
+Sub-problems must be specific to THIS problem (not generic advice), ordered logically, and each one sentence.
+If reference knowledge is provided, use it, but do not copy it.
+Reply with JSON only: {"subProblems": ["...", "..."]}`;
 
-    if (
-        normalized.includes("interview") ||
-        normalized.includes("job") ||
-        normalized.includes("placement")
-    ) {
-        return [
-            "Identify the target role and required skills",
-            "Assess the current skill level",
-            "Create a structured preparation roadmap",
-            "Practice technical and behavioral questions",
-            "Track progress and improve weak areas"
-        ];
+const decomposerAgent = async ({ problem, route, knowledge }, llm) => {
+    const user = [
+        `Problem: ${problem}`,
+        `Category: ${route}`,
+        knowledge ? `Reference knowledge:\n${knowledge}` : null
+    ].filter(Boolean).join("\n\n");
+
+    const { data, usage } = await llm({ system: SYSTEM, user });
+
+    const subProblems = asStringArray(data.subProblems, { max: 6 });
+
+    if (subProblems.length === 0) {
+        throw new Error("Decomposer returned no sub-problems");
     }
 
-    if (
-        normalized.includes("project") ||
-        normalized.includes("build") ||
-        normalized.includes("application")
-    ) {
-        return [
-            "Define the main project objective",
-            "Identify the required features and technologies",
-            "Design the frontend, backend, and database structure",
-            "Develop and test the core functionality",
-            "Deploy and improve the application"
-        ];
-    }
-
-    if (knowledgePreview.length > 0) {
-        return knowledgePreview.map(
-            (item) => item.trim()
-        );
-    }
-
-    return [
-        "Understand the main question",
-        "Identify important concepts",
-        "Break the topic into smaller parts",
-        "Analyze each part using available information",
-        "Create a clear final explanation"
-    ];
+    return { output: subProblems, usage };
 };
 
 module.exports = decomposerAgent;

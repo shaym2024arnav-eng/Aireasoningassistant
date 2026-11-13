@@ -1,32 +1,41 @@
-const solverAgent = (
-    problem,
-    plan,
-    knowledge
-) => {
-    const knowledgeText =
-        knowledge &&
-        knowledge !==
-            "No external Wikipedia knowledge was found for this question."
-            ? knowledge
-            : "";
+const { asString } = require("../utils/normalize");
 
-    return `
-To address the question "${problem}", the following information is relevant:
+const SYSTEM = `You are the Solver agent in a multi-agent reasoning system.
+Follow the plan step by step and solve the problem. Show your working for each step.
+Use the reference knowledge when provided and do not invent facts that contradict it.
+If a Verifier rejected a previous attempt, fix every issue it listed.
+Finish with a short, direct final answer.
+Reply with JSON only: {"working": "<step-by-step working>", "answer": "<final answer in 1-3 sentences>"}`;
 
-${knowledgeText}
+const solverAgent = async ({ problem, plan, knowledge, feedback, previousAnswer }, llm) => {
+    const parts = [
+        `Problem: ${problem}`,
+        `Plan:\n${plan.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
+    ];
 
-A structured approach is:
+    if (knowledge) {
+        parts.push(`Reference knowledge:\n${knowledge}`);
+    }
 
-${plan
-    .map(
-        (step, index) =>
-            `${index + 1}. ${step}`
-    )
-    .join("\n")}
+    if (feedback?.length) {
+        parts.push(
+            `Your previous answer was: ${previousAnswer}\n` +
+            `The Verifier rejected it for these reasons:\n${feedback.map((f) => `- ${f}`).join("\n")}`
+        );
+    }
 
-Using the available knowledge and the plan above,
-the problem can be analyzed systematically and explained clearly.
-    `.trim();
+    const { data, usage } = await llm({ system: SYSTEM, user: parts.join("\n\n"), maxTokens: 2048 });
+
+    const answer = asString(data.answer);
+
+    if (!answer) {
+        throw new Error("Solver returned an empty answer");
+    }
+
+    return {
+        output: { working: asString(data.working), answer },
+        usage
+    };
 };
 
 module.exports = solverAgent;

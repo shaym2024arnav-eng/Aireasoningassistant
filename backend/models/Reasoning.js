@@ -2,74 +2,54 @@ const mongoose = require("mongoose");
 
 const reasoningSchema = new mongoose.Schema(
     {
-        // User who created this reasoning session
         user: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true
-        },
-
-        // User's original question or problem
-        problem: {
-            type: String,
             required: true,
-            trim: true
+            index: true
         },
 
-        routeType: {
-    type: String,
-    default: "general"
-},
+        problem: { type: String, required: true, trim: true },
 
-        // Output from Decomposer Agent
-        breakdown: {
-            type: [String],
+        // Router agent's classification
+        routeType: { type: String, default: "general" },
+
+        // Decomposer agent: sub-problems
+        breakdown: { type: [String], default: [] },
+
+        // Planner agent: ordered steps
+        plan: { type: [String], default: [] },
+
+        // Solver agent: working + final answer, and the short answer alone
+        solution: { type: String, default: "" },
+        answer: { type: String, default: "" },
+
+        // Verifier agent: human-readable summary (kept as a string so older
+        // history entries still render) plus the structured verdict.
+        verification: { type: String, default: "" },
+        verificationPassed: { type: Boolean, default: null },
+        verificationIssues: { type: [String], default: [] },
+        confidence: { type: Number, default: null },
+        revisions: { type: Number, default: 0 },
+
+        // Explainer agent
+        finalAnswer: { type: String, default: "" },
+
+        // Wikipedia source used as context
+        sourceTitle: { type: String, default: null },
+        sourceContent: { type: String, default: null },
+
+        // Per-agent timings and token usage, for the dashboard and debugging
+        trace: {
+            type: [{ _id: false, agent: String, ms: Number }],
             default: []
         },
-
-        // Output from Planner Agent
-        plan: {
-            type: [String],
-            default: []
-        },
-
-        // Output from Solver Agent
-        solution: {
-            type: String,
-            default: ""
-        },
-
-        // Output from Verifier Agent
-        verification: {
-            type: String,
-            default: ""
-        },
-
-        // Output from Explainer Agent
-        finalAnswer: {
-            type: String,
-            default: ""
-        },
-
-        // Wikipedia article title used as knowledge source
-        sourceTitle: {
-            type: String,
-            default: null
-        },
-
-        // Wikipedia information retrieved for the question
-        sourceContent: {
-            type: String,
-            default: null
-        }
+        totalMs: { type: Number, default: null },
+        tokens: { type: Number, default: null }
     },
-    {
-        // Automatically creates createdAt and updatedAt
-        timestamps: true
-    }
+    { timestamps: true }
 );
 
-module.exports = mongoose.model(
-    "Reasoning",
-    reasoningSchema
-);
+reasoningSchema.index({ user: 1, createdAt: -1 });
+
+module.exports = mongoose.model("Reasoning", reasoningSchema);

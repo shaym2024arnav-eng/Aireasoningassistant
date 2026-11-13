@@ -1,66 +1,32 @@
-const routerAgent = (problem) => {
-    const text = problem.toLowerCase().trim();
+const { asString } = require("../utils/normalize");
 
-    const factualKeywords = [
-        "what is",
-        "who is",
-        "who was",
-        "when was",
-        "where is",
-        "explain",
-        "define",
-        "history of",
-        "how does",
-        "why does"
-    ];
+const ROUTES = ["factual", "analytical", "planning", "project", "general"];
 
-    const planningKeywords = [
-        "how can i",
-        "how should i",
-        "prepare",
-        "roadmap",
-        "plan",
-        "schedule",
-        "improve",
-        "learn",
-        "study"
-    ];
+const SYSTEM = `You are the Router agent in a multi-agent reasoning system.
+Classify the user's problem into exactly one category:
+- "factual": asks about facts, definitions, history, how something works.
+- "analytical": maths, logic, puzzles, comparisons, or anything needing step-by-step calculation or deduction.
+- "planning": asks for a roadmap, schedule, study or preparation plan.
+- "project": asks how to build, design or develop software or a product.
+- "general": anything else.
+Also decide whether looking up an encyclopedia article would help answer it.
+Reply with JSON only: {"route": "<category>", "needsKnowledge": true|false, "searchQuery": "<short encyclopedia search query or empty string>"}`;
 
-    const projectKeywords = [
-        "build",
-        "create",
-        "develop",
-        "project",
-        "application",
-        "website",
-        "app"
-    ];
+const routerAgent = async ({ problem }, llm) => {
+    const { data, usage } = await llm({ system: SYSTEM, user: problem, temperature: 0 });
 
-    if (
-        factualKeywords.some(
-            (keyword) => text.startsWith(keyword)
-        )
-    ) {
-        return "factual";
-    }
+    const route = ROUTES.includes(data.route) ? data.route : "general";
 
-    if (
-        projectKeywords.some(
-            (keyword) => text.includes(keyword)
-        )
-    ) {
-        return "project";
-    }
-
-    if (
-        planningKeywords.some(
-            (keyword) => text.includes(keyword)
-        )
-    ) {
-        return "planning";
-    }
-
-    return "general";
+    return {
+        output: {
+            route,
+            needsKnowledge: data.needsKnowledge === true,
+            searchQuery: asString(data.searchQuery) || problem
+        },
+        usage
+    };
 };
+
+routerAgent.ROUTES = ROUTES;
 
 module.exports = routerAgent;
